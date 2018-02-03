@@ -1,0 +1,10 @@
+
+#Ignore object files
+*.[oa]
+
+#Ignore output files
+Debug/
+
+#Ignore local settings
+.settings/
+sysProps.xml
