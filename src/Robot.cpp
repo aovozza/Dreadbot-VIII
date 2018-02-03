@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 //Dreadbot VIII - FIRST Power Up
-//Authors:
+//Authors: Christian Vaughan
 
 #include <iostream>
 #include <string>
