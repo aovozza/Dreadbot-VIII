@@ -5,6 +5,9 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+//Dreadbot VIII - FIRST Power Up
+//Authors:
+
 #include <iostream>
 #include <string>
 
