@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 //Dreadbot VIII - FIRST Power Up
-//Authors: Christian Vaughan,
+//Authors: Christian Vaughan, Ethan Leonello,
 
 #include <iostream>
 #include <string>
@@ -50,6 +50,8 @@ public:
 			// Default Auto goes here
 		}
 	}
+
+
 
 	void AutonomousPeriodic() {
 		if (m_autoSelected == kAutoNameCustom) {
