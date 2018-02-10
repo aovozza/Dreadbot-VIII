@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 //Dreadbot VIII - FIRST Power Up
-//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier,
+//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier, Robert Lindskov
 
 #include <iostream>
 #include <string>
@@ -22,6 +22,7 @@
 #include "ctre/Phoenix.h"
 #include <WPILib.h>
 #include "AHRS.h"
+
 
 class Robot : public frc::IterativeRobot
 {
