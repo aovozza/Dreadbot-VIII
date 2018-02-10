@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 //Dreadbot VIII - FIRST Power Up
-//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier
+//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier,
 
 #include <iostream>
 #include <string>
@@ -17,11 +17,17 @@
 #include <SmartDashboard/SmartDashboard.h>
 
 class Robot : public frc::IterativeRobot {
+
+	double centerX = 0.0;
+	double centerY = 0.0;
+	double area = 0.0;
+
 public:
 	void RobotInit() {
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
 	}
 
 	/*
@@ -54,6 +60,16 @@ public:
 
 
 	void AutonomousPeriodic() {
+		//These are the numbers coming from the vision camera
+		centerX = SmartDashboard::GetNumber("yellowbox.contour_1.cx", -1);
+		centerY = SmartDashboard::GetNumber("yellowbox.contour_1.cy", -1);
+		area = SmartDashboard::GetNumber("yellowbox.contour_1.area", -1);
+
+		//Putting the same values as X and Y values for easy identification
+		SmartDashboard::PutNumber("Center X ", centerX);
+		SmartDashboard::PutNumber("Center Y ", centerY);
+		SmartDashboard::PutNumber("Area ", area);
+
 		if (m_autoSelected == kAutoNameCustom) {
 			// Custom Auto goes here
 		} else {
