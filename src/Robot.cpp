@@ -11,22 +11,50 @@
 #include <iostream>
 #include <string>
 
+#include <time.h>
+#include "Timer.h"
+
 #include <IterativeRobot.h>
 #include <LiveWindow/LiveWindow.h>
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-class Robot : public frc::IterativeRobot {
+#include "ctre/Phoenix.h"
+#include <WPILib.h>
+#include "AHRS.h"
+
+class Robot : public frc::IterativeRobot
+{
+
+	WPI_TalonSRX *lf = new WPI_TalonSRX(0); //left front
+	WPI_TalonSRX *lr = new WPI_TalonSRX(1); //left rear
+	WPI_TalonSRX *rf = new WPI_TalonSRX(2); //right front
+	WPI_TalonSRX *rr = new WPI_TalonSRX(3); //right rear
+	AHRS *ahrs = new AHRS(SPI::Port::kMXP);
+
+	Joystick controller1;
+
+	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
+	double distance = 0;
+
+	int iJoystickX_ = 0; // Forward motion
+	int iJoystickY_ = 1; // Side motion
+	int iJoystickRotate_ = 2; // Rotating motion
+
 
 	double centerX = 0.0;
 	double centerY = 0.0;
 	double area = 0.0;
 
 public:
-	void RobotInit() {
-		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
-		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
+	void RobotInit()
+	{
+		//m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
+		//m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
+		ahrs->ZeroYaw();
+		Ultra->SetAutomaticMode(true);
 
 	}
 
@@ -44,22 +72,243 @@ public:
 	 * SendableChooser make sure to add them to the chooser code above as
 	 * well.
 	 */
-	void AutonomousInit() override {
-		m_autoSelected = m_chooser.GetSelected();
-		// m_autoSelected = SmartDashboard::GetString(
-		// 		"Auto Selector", kAutoNameDefault);
-		std::cout << "Auto selected: " << m_autoSelected << std::endl;
 
-		if (m_autoSelected == kAutoNameCustom) {
-			// Custom Auto goes here
-		} else {
-			// Default Auto goes here
+	int targetAngle = 0;
+	double currentAngle = 0;
+	double angleRemain = targetAngle - currentAngle;
+	double angleSlop = 3;
+	bool increaseMaxSpeed = 8;
+	int autonPosition = 0;
+	bool autonIsLeftSwitch = false;
+	bool autonIsBlueAlliance = false;
+
+	void Wait(double t)
+	{
+		clock_t wait;
+		wait = clock();
+		double start = wait;
+		double timeLeft = (start + t) - wait;
+		while (wait <= start + t)
+		{
+			wait = clock();
+			distance = Ultra->GetRangeInches();
+			frc::SmartDashboard::PutNumber("distance", distance);
+			timeLeft = (start + t) - wait;
+			frc::SmartDashboard::PutNumber("Time Left", timeLeft);
+		}
+
+		return;
+	}
+
+	void DriveForward(double x, double t)
+	{
+		lf -> Set(ControlMode::PercentOutput, x);
+		lr -> Set(ControlMode::PercentOutput, x);
+		rf -> Set(ControlMode::PercentOutput, x);
+		rr -> Set(ControlMode::PercentOutput, x);
+		Wait(t); //Motors set for t time
+		lf -> Set(ControlMode::PercentOutput, 0);
+		lr -> Set(ControlMode::PercentOutput, 0);
+		rf -> Set(ControlMode::PercentOutput, 0);
+		rr -> Set(ControlMode::PercentOutput, 0);
+		x = 0;
+		t = 0;
+	}
+
+	void DriveSideways(double x, double t)
+	{
+		lf -> Set(ControlMode::PercentOutput, -x);
+		lr -> Set(ControlMode::PercentOutput, x);
+		rf -> Set(ControlMode::PercentOutput, -x);
+		rr -> Set(ControlMode::PercentOutput, x);
+		Wait(t);
+		lf -> Set(ControlMode::PercentOutput, 0);
+		lr -> Set(ControlMode::PercentOutput, 0);
+		rf -> Set(ControlMode::PercentOutput, 0);
+		rr -> Set(ControlMode::PercentOutput, 0);
+	}
+
+	void Lifter(int x)
+	{
+		//raise or lower the lifting device
+		if (x == 0)
+		{
+
+		}
+
+		else if(x == 1)
+		{
+
+		}
+
+		else
+		{
+
 		}
 	}
 
+	void Drop()
+	{
+		//release the cube
+	}
+
+	void TurnToAngle(int targetAngle)
+	{
+			//Turn setting motor speed to  currentAngle / targetAngle and have a minimum of .1
+		currentAngle = ahrs->GetYaw();
+		double x = targetAngle / fabs(currentAngle);
+
+		while (fabs(currentAngle) < fabs(targetAngle) - angleSlop)
+		{
+			if (x > 1)
+				x = 1;
+			lf -> Set(ControlMode::PercentOutput, x);
+			lr -> Set(ControlMode::PercentOutput, x);
+			rf -> Set(ControlMode::PercentOutput, -x);
+			rr -> Set(ControlMode::PercentOutput, -x);
+			currentAngle = ahrs->GetYaw();
+			x = targetAngle / currentAngle;
+
+			}
+
+		}
+
+	void LeftOne()
+	{
+		DriveForward(1, 1000);
+		TurnToAngle(-90);
+		Lifter(1);
+		DriveForward(1, 1000);
+		TurnToAngle(-90);
+		Drop();
+	}
 
 
-	void AutonomousPeriodic() {
+	void LeftTwo()
+	{
+		Wait(5000);
+		DriveSideways(-1, 1000);
+		Lifter(1);
+		DriveForward(1, 1000);
+		Drop();
+	}
+
+	void LeftThree()
+	{
+		DriveForward(1, 1000);
+		Lifter(1);
+		TurnToAngle(90);
+		DriveForward(1, 1000);
+		Drop();
+	}
+
+	void RightOne()
+	{
+		DriveForward(1, 1000);
+		Lifter(1);
+		TurnToAngle(-90);
+		DriveForward(1, 1000);
+		Drop();
+	}
+
+	void RightTwo()
+	{
+		Wait(5);
+		DriveSideways(1, 1000);
+		Lifter(1);
+		DriveForward(1, 1000);
+		Drop();
+	}
+
+	void RightThree()
+	{
+		DriveForward(1, 1000);
+		TurnToAngle(90);
+		Lifter(1);
+		DriveForward(1, 1000);
+		TurnToAngle(90);
+		Drop();
+	}
+
+	void Drive(double xAxis, double yAxis, double rot)
+	{
+		double noMove = 0.2; //Dead area of the axes
+		double maxSpeed = .5;
+
+		if (fabs(xAxis) < noMove)
+			xAxis = 0.0;
+
+		if (fabs(yAxis) < noMove)
+			yAxis = 0.0;
+
+		if (fabs(rot) < noMove)
+			rot = 0.0;
+
+		if (controller1.GetRawButton(increaseMaxSpeed))
+			maxSpeed = 1;
+
+		else
+			maxSpeed = .5;
+
+		double lfSpeed = -xAxis + yAxis + rot;
+		double lrSpeed = xAxis + yAxis + rot;
+		double rfSpeed = -xAxis + yAxis - rot;
+		double rrSpeed = xAxis + yAxis - rot;
+
+		if (fabs(lfSpeed) > 1)
+			lfSpeed = fabs(lfSpeed) / lfSpeed;
+
+		if (fabs(lrSpeed) > 1)
+			lrSpeed = fabs(lrSpeed) / lrSpeed;
+
+		if (fabs(rfSpeed) > 1)
+			rfSpeed = fabs(rfSpeed) / rfSpeed;
+
+		if (fabs(rrSpeed) > 1)
+			rrSpeed = fabs(rrSpeed) / rrSpeed;
+
+		lf -> Set(ControlMode::PercentOutput, lfSpeed*maxSpeed);
+		lr -> Set(ControlMode::PercentOutput, lrSpeed*maxSpeed);
+		rf -> Set(ControlMode::PercentOutput, rfSpeed*maxSpeed);
+		rr -> Set(ControlMode::PercentOutput, rrSpeed*maxSpeed);
+	}
+
+	char givenPos = ' '; //Where we start against the alliance wall
+	char switchRL = ' '; //Where our side if the switch is
+
+	void AutonomousInit() override
+	{
+		//SmartDashboard::PutNumber("Auton Position", autonPosition);
+		//SmartDashboard::PutBoolean("Auton Is Blue Alliance?", autonIsBlueAlliance);
+		//SmartDashboard::PutBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
+
+		SmartDashboard::GetNumber("Auton Position", autonPosition);
+		SmartDashboard::GetBoolean("Auton Is Blue Alliance", autonIsBlueAlliance);
+
+		if (autonIsBlueAlliance == true)
+		{
+			if (/*left switch is blue*/)
+			{
+				autonIsLeftSwitch = true;
+			}
+		}
+
+		else if(autonIsBlueAlliance == false)
+		{
+			if(/*left switch is red*/)
+			{
+				autonIsLeftSwitch = true;
+			}
+		}
+
+		SmartDashboard::GetBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
+
+		currentAngle = 0;
+		ahrs->ZeroYaw();
+		}
+
+	void AutonomousPeriodic()
+	{
 		//These are the numbers coming from the vision camera
 		centerX = SmartDashboard::GetNumber("yellowbox.contour_1.cx", -1);
 		centerY = SmartDashboard::GetNumber("yellowbox.contour_1.cy", -1);
@@ -70,24 +319,69 @@ public:
 		SmartDashboard::PutNumber("Center Y ", centerY);
 		SmartDashboard::PutNumber("Area ", area);
 
-		if (m_autoSelected == kAutoNameCustom) {
-			// Custom Auto goes here
-		} else {
-			// Default Auto goes here
+		distance = Ultra->GetRangeInches();
+		frc::SmartDashboard::PutNumber("distance", distance);
+
+		currentAngle = ahrs->GetYaw();
+		frc::SmartDashboard::PutNumber("Current Angle", currentAngle);
+
+		SmartDashboard::GetNumber("Auton Position", autonPosition);
+		SmartDashboard::GetBoolean("Auton Is Blue Alliance", autonIsBlueAlliance);
+		SmartDashboard::GetBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
+
+		if(autonPosition == 1)
+		{
+			if (autonIsLeftSwitch == true)
+				LeftOne();
+
+			else
+				RightOne();
 		}
+
+		if(autonPosition == 2)
+		{
+			if (autonIsLeftSwitch == true)
+				LeftTwo();
+
+			else
+				RightTwo();
+		}
+
+		if(autonPosition == 3)
+		{
+			if (autonIsLeftSwitch == true)
+				LeftThree();
+
+			else
+				RightThree();
+		}
+
 	}
 
-	void TeleopInit() {}
+	void TeleopInit()
+	{
 
-	void TeleopPeriodic() {}
+	}
 
-	void TestPeriodic() {}
+	void TeleopPeriodic()
+	{
+		double joystickX = controller1.GetRawAxis(iJoystickX_);
+		double joystickY = controller1.GetRawAxis(iJoystickY_);
+		double joystickRot = controller1.GetRawAxis(iJoystickRotate_);
+		Drive( joystickY, joystickX, joystickRot);
+
+	}
+
+	void TestPeriodic()
+	{
+
+	}
 
 private:
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
-	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoNameCustom = "My Auto";
+	//const std::string kAutoNameDefault = "Default";
+	//const std::string kAutoNameCustom = "My Auto";
 	std::string m_autoSelected;
 };
 
