@@ -374,10 +374,11 @@ public:
     {
     	if(axisVal < -0.10)
     		return axisVal;
-    	if(axisVal> +0.10)
+    	if(axisVal > 0.10)
     		return axisVal;
     	return 0;
     }
+
 	void TeleopInit()
 	{
 		gyro->Reset();
@@ -386,8 +387,13 @@ public:
 	void TeleopPeriodic()
 	{
 		float angle = gyro->GetAngle();
-		m_robotDrive->DriveCartesian(Db(js1->GetX()), Db(js1->GetY()), Db(js1->GetZ()), angle);
-			if(js1->GetRawButton(5))
+		if (js1->GetRawButton(8)) {
+			m_robotDrive->DriveCartesian(Db(js1->GetY()), Db(-js1->GetX()), Db(-js1->GetZ()), angle);
+		}
+		else{
+			m_robotDrive->DriveCartesian(0.5*Db(js1->GetY()), 0.5*Db(-js1->GetX()), 0.5*Db(-js1->GetZ()), angle);
+		}
+		if(js1->GetRawButton(5))
 				gyro->Reset();
 
 	}
