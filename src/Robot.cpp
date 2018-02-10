@@ -30,7 +30,6 @@ class Robot : public frc::IterativeRobot
 	WPI_TalonSRX *lr = new WPI_TalonSRX(1); //left rear
 	WPI_TalonSRX *rf = new WPI_TalonSRX(2); //right front
 	WPI_TalonSRX *rr = new WPI_TalonSRX(3); //right rear
-	AHRS *ahrs = new AHRS(SPI::Port::kMXP);
 
 	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
 	double distance = 0;
@@ -48,16 +47,25 @@ public:
 
 	Joystick *js1;
 
+	MecanumDrive *m_robotDrive;
+    AHRS *gyro;
+
 	void RobotInit()
 	{
 		//m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		//m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
-		ahrs->ZeroYaw();
+		gyro = new AHRS(SPI::Port::kMXP);
+
+		gyro->ZeroYaw();
 		Ultra->SetAutomaticMode(true);
 
     	js1 = new Joystick(0);
+
+    	m_robotDrive = new MecanumDrive(*lf,*lr, *rf,*rr);
+    	m_robotDrive->SetExpiration(0.5);
+    	m_robotDrive->SetSafetyEnabled(false);
 
 	}
 
@@ -159,7 +167,7 @@ public:
 	void TurnToAngle(int targetAngle)
 	{
 			//Turn setting motor speed to  currentAngle / targetAngle and have a minimum of .1
-		currentAngle = ahrs->GetYaw();
+		currentAngle = gyro->GetYaw();
 		double x = targetAngle / fabs(currentAngle);
 
 		while (fabs(currentAngle) < fabs(targetAngle) - angleSlop)
@@ -170,7 +178,7 @@ public:
 			lr -> Set(ControlMode::PercentOutput, x);
 			rf -> Set(ControlMode::PercentOutput, -x);
 			rr -> Set(ControlMode::PercentOutput, -x);
-			currentAngle = ahrs->GetYaw();
+			currentAngle = gyro->GetYaw();
 			x = targetAngle / currentAngle;
 
 			}
@@ -308,7 +316,7 @@ public:
 		SmartDashboard::GetBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
 
 		currentAngle = 0;
-		ahrs->ZeroYaw();
+		gyro->ZeroYaw();
 		}
 
 	void AutonomousPeriodic()
@@ -326,7 +334,7 @@ public:
 		distance = Ultra->GetRangeInches();
 		frc::SmartDashboard::PutNumber("distance", distance);
 
-		currentAngle = ahrs->GetYaw();
+		currentAngle = gyro->GetYaw();
 		frc::SmartDashboard::PutNumber("Current Angle", currentAngle);
 
 		SmartDashboard::GetNumber("Auton Position", autonPosition);
@@ -362,17 +370,25 @@ public:
 
 	}
 
+    double Db(double axisVal)
+    {
+    	if(axisVal < -0.10)
+    		return axisVal;
+    	if(axisVal> +0.10)
+    		return axisVal;
+    	return 0;
+    }
 	void TeleopInit()
 	{
-
+		gyro->Reset();
 	}
 
 	void TeleopPeriodic()
 	{
-		double joystickX = js1->GetRawAxis(iJoystickX_);
-		double joystickY = js1->GetRawAxis(iJoystickY_);
-		double joystickRot = js1->GetRawAxis(iJoystickRotate_);
-		Drive( joystickY, joystickX, joystickRot);
+		float angle = gyro->GetAngle();
+		m_robotDrive->DriveCartesian(Db(js1->GetX()), Db(js1->GetY()), Db(js1->GetZ()), angle);
+			if(js1->GetRawButton(5))
+				gyro->Reset();
 
 	}
 
