@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 //Dreadbot VIII - FIRST Power Up
-//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier, Robert Lindskov
+//Authors: Christian Vaughan, Ethan Leonello, Clara Gauthier,
 
 #include <iostream>
 #include <string>
@@ -23,14 +23,20 @@
 #include <WPILib.h>
 #include "AHRS.h"
 
-
 class Robot : public frc::IterativeRobot
 {
-
+	Compressor *grabComp = new Compressor(0);
+	DoubleSolenoid *gSol1 = new DoubleSolenoid(0, 1);
+	DoubleSolenoid *gSol2 = new DoubleSolenoid(2, 3);
 	WPI_TalonSRX *lf = new WPI_TalonSRX(0); //left front
-	WPI_TalonSRX *lr = new WPI_TalonSRX(1); //left rear
-	WPI_TalonSRX *rf = new WPI_TalonSRX(2); //right front
+	WPI_TalonSRX *rf = new WPI_TalonSRX(1); //right front
+	WPI_TalonSRX *lr = new WPI_TalonSRX(2); //left rear
 	WPI_TalonSRX *rr = new WPI_TalonSRX(3); //right rear
+	WPI_TalonSRX *sLift = new WPI_TalonSRX(4); //Skylift
+	WPI_TalonSRX *cWinch = new WPI_TalonSRX(5); //climb winch
+	WPI_TalonSRX *cExtend = new WPI_TalonSRX(6); //climb extend
+	WPI_TalonSRX *pWheelL = new WPI_TalonSRX(7); //pickup wheels left
+	WPI_TalonSRX *pWheelR = new WPI_TalonSRX(8); //pickup wheels right
 
 	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
 	double distance = 0;
@@ -47,7 +53,7 @@ class Robot : public frc::IterativeRobot
 public:
 
 	Joystick *js1;
-
+	Joystick *js2;
 	MecanumDrive *m_robotDrive;
     AHRS *gyro;
 
@@ -63,7 +69,7 @@ public:
 		Ultra->SetAutomaticMode(true);
 
     	js1 = new Joystick(0);
-
+    	js2 = new Joystick(1);
     	m_robotDrive = new MecanumDrive(*lf,*lr, *rf,*rr);
     	m_robotDrive->SetExpiration(0.5);
     	m_robotDrive->SetSafetyEnabled(false);
@@ -185,6 +191,38 @@ public:
 			}
 
 		}
+	void teleopArmControl(){
+		if(js2->GetRawButton(5)){
+			gSol1->Set(DoubleSolenoid::Value::kReverse);
+		}
+		if(js2->GetRawButton(7)){
+			gSol1->Set(DoubleSolenoid::Value::kForward);
+		}
+		if(js2->GetRawButton(4)){
+			gSol2->Set(DoubleSolenoid::Value::kReverse);
+		}
+		if(js2->GetRawButton(1)){
+			gSol2->Set(DoubleSolenoid::Value::kForward);
+		}
+	}
+	void pickUpWheels(){
+		if(js2->GetRawButton(8)){
+			pWheelL->Set(ControlMode::PercentOutput, .5);
+			pWheelR->Set(ControlMode::PercentOutput, -.5);
+		}
+		else if (js2->GetRawButton(6)){
+			pWheelL->Set(ControlMode::PercentOutput, .5);
+			pWheelR->Set(ControlMode::PercentOutput, -.5);
+
+		}
+		else{
+			pWheelL->Set(ControlMode::PercentOutput, 0);
+			pWheelR->Set(ControlMode::PercentOutput, 0);
+		}
+
+
+
+	}
 
 	void LeftOne()
 	{
@@ -397,6 +435,8 @@ public:
 		if(js1->GetRawButton(5))
 				gyro->Reset();
 
+		teleopArmControl();
+		pickUpWheels();
 	}
 
 	void TestPeriodic()
