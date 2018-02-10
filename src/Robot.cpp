@@ -32,8 +32,6 @@ class Robot : public frc::IterativeRobot
 	WPI_TalonSRX *rr = new WPI_TalonSRX(3); //right rear
 	AHRS *ahrs = new AHRS(SPI::Port::kMXP);
 
-	Joystick controller1;
-
 	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
 	double distance = 0;
 
@@ -47,6 +45,9 @@ class Robot : public frc::IterativeRobot
 	double area = 0.0;
 
 public:
+
+	Joystick *js1;
+
 	void RobotInit()
 	{
 		//m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
@@ -56,7 +57,10 @@ public:
 		ahrs->ZeroYaw();
 		Ultra->SetAutomaticMode(true);
 
+    	js1 = new Joystick(0);
+
 	}
+
 
 	/*
 	 * This autonomous (along with the chooser code above) shows how to
@@ -244,7 +248,7 @@ public:
 		if (fabs(rot) < noMove)
 			rot = 0.0;
 
-		if (controller1.GetRawButton(increaseMaxSpeed))
+		if (js1->GetRawButton(increaseMaxSpeed))
 			maxSpeed = 1;
 
 		else
@@ -365,9 +369,9 @@ public:
 
 	void TeleopPeriodic()
 	{
-		double joystickX = controller1.GetRawAxis(iJoystickX_);
-		double joystickY = controller1.GetRawAxis(iJoystickY_);
-		double joystickRot = controller1.GetRawAxis(iJoystickRotate_);
+		double joystickX = js1->GetRawAxis(iJoystickX_);
+		double joystickY = js1->GetRawAxis(iJoystickY_);
+		double joystickRot = js1->GetRawAxis(iJoystickRotate_);
 		Drive( joystickY, joystickX, joystickRot);
 
 	}
