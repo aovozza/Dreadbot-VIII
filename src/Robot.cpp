@@ -239,6 +239,21 @@ public:
 			}
 		}
 
+	void teleopSkyLift()
+	{
+		bool goingUp = js1->GetRawButton(7);
+		bool goingDown = js1->GetRawButton(5);
+
+		if(!goingUp && !goingDown){
+			sLift ->Set(ControlMode::PercentOutput, 0.75);
+		}
+		else if(goingUp){
+		 sLift ->Set(ControlMode::PercentOutput, 1);
+		}
+		else if(goingDown){
+			sLift ->Set(ControlMode::PercentOutput, 0);
+		}
+	}
 	void teleopArmControl(){
 		if(js2->GetRawButton(5)){
 			gSol1->Set(DoubleSolenoid::Value::kReverse);
