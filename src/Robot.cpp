@@ -19,8 +19,9 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-#include "ctre/Phoenix.h"
 #include <WPILib.h>
+#include "ctre/Phoenix.h"
+
 #include "AHRS.h"
 
 class Robot : public frc::IterativeRobot
@@ -221,6 +222,8 @@ public:
 		}
 	//here's where we need to grab the block
 	}
+
+	//This extends and retracts the pole. It also sets the motor to 0
 	void ActuateBirdPole(int extend)
 		{
 			if (extend > 0)
@@ -386,18 +389,18 @@ public:
 
 		if (autonIsBlueAlliance == true)
 		{
-			if (/*left switch is blue*/)
-			{
-				autonIsLeftSwitch = true;
-			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
 		}
 
 		else if(autonIsBlueAlliance == false)
 		{
-			if(/*left switch is red*/)
-			{
-				autonIsLeftSwitch = true;
-			}
+//			if(/*left switch is red*/)
+//			{
+//				autonIsLeftSwitch = true;
+//			}
 		}
 
 		SmartDashboard::GetBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
@@ -485,6 +488,17 @@ public:
 
 		teleopArmControl();
 		pickUpWheels();
+
+		int PoleExtend=0;
+		if (js1->GetRawButton(3)){ //Button B extends the pole
+			PoleExtend=1;
+		}
+		if (js1->GetRawButton(2)){ //Button A retracts the pole
+			PoleExtend=-1;
+		}
+
+		ActuateBirdPole(PoleExtend);
+
 	}
 
 	void TestPeriodic()
