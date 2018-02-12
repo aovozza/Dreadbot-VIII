@@ -38,9 +38,9 @@ class Robot : public frc::IterativeRobot
 	WPI_TalonSRX *pWheelL = new WPI_TalonSRX(7); //pickup wheels left
 	WPI_TalonSRX *pWheelR = new WPI_TalonSRX(8); //pickup wheels right
 
-	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
+	Ultrasonic *ultra = new Ultrasonic(0, 1); //ultra sonic sensor
 	double distance = 0;
-
+	double driveSpeed = 0;
 	int iJoystickX_ = 0; // Forward motion
 	int iJoystickY_ = 1; // Side motion
 	int iJoystickRotate_ = 2; // Rotating motion
@@ -66,7 +66,7 @@ public:
 		gyro = new AHRS(SPI::Port::kMXP);
 
 		gyro->ZeroYaw();
-		Ultra->SetAutomaticMode(true);
+		ultra->SetAutomaticMode(true);
 
     	js1 = new Joystick(0);
     	js2 = new Joystick(1);
@@ -110,7 +110,7 @@ public:
 		while (wait <= start + t)
 		{
 			wait = clock();
-			distance = Ultra->GetRangeInches();
+			distance = ultra->GetRangeInches();
 			frc::SmartDashboard::PutNumber("distance", distance);
 			timeLeft = (start + t) - wait;
 			frc::SmartDashboard::PutNumber("Time Left", timeLeft);
@@ -192,7 +192,35 @@ public:
 
 
 	}
+	void DriveToBlock(){
+	double distance = ultra->GetRangeInches();
+	SmartDashboard::PutNumber("DriveSpeed", driveSpeed);
+	//if (driveMode != DriveMode::Driving){
+	//return;
+	//	}
+			if (distance >= 44){
+			lf ->Set(ControlMode::PercentOutput, -driveSpeed);
+			lr ->Set(ControlMode::PercentOutput, -driveSpeed);
+			rf ->Set(ControlMode::PercentOutput, driveSpeed);
+			rr ->Set(ControlMode::PercentOutput, driveSpeed);
 
+			distance = ultra->GetRangeInches();
+			SmartDashboard::PutNumber("Distance", distance);
+				}
+		if (distance < 44 && distance >= 8){
+
+		driveSpeed = driveSpeed * 0.9;
+
+		}
+		if (distance < 8) {
+		//driveMode = DriveMode::Pickup;
+		lf ->Set(ControlMode::PercentOutput, 0);
+		lr ->Set(ControlMode::PercentOutput, 0);
+		rf ->Set(ControlMode::PercentOutput, 0);
+	    rr ->Set(ControlMode::PercentOutput, 0);
+		}
+	//here's where we need to grab the block
+	}
 	void ActuateBirdPole(int extend)
 		{
 			if (extend > 0)
@@ -390,7 +418,7 @@ public:
 		SmartDashboard::PutNumber("Center Y ", centerY);
 		SmartDashboard::PutNumber("Area ", area);
 
-		distance = Ultra->GetRangeInches();
+		distance = ultra->GetRangeInches();
 		frc::SmartDashboard::PutNumber("distance", distance);
 
 		currentAngle = gyro->GetYaw();
