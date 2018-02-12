@@ -190,7 +190,27 @@ public:
 
 			}
 
+
+	}
+
+	void ActuateBirdPole(int extend)
+		{
+			if (extend > 0)
+			{
+				cExtend->Set(0.5);
+			}
+
+			else if (extend < 0)
+			{
+				cExtend->Set(-0.5);
+			}
+
+			else if (extend == 0)
+			{
+				cExtend->Set(0.0);
+			}
 		}
+
 	void teleopArmControl(){
 		if(js2->GetRawButton(5)){
 			gSol1->Set(DoubleSolenoid::Value::kReverse);
