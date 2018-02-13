@@ -19,9 +19,9 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-#include "ctre/Phoenix.h"
+#include <ctre/Phoenix.h>
 #include <WPILib.h>
-#include "AHRS.h"
+#include <AHRS.h>
 
 class Robot : public frc::IterativeRobot
 {
@@ -52,8 +52,8 @@ class Robot : public frc::IterativeRobot
 
 public:
 
-	Joystick *js1;
-	Joystick *js2;
+	Joystick *js1; //primary controller
+	Joystick *js2; //secondary controller
 	MecanumDrive *m_robotDrive;
     AHRS *gyro;
 
@@ -193,7 +193,8 @@ public:
 
 	}
 
-	void ActuateBirdPole(int extend)
+	void ActuateBirdPole(int extend) //this function 1. makes the motor go forward to extend the pole
+									 //2. rewinds the pole by making the motor negative 3. stops the motor
 		{
 			if (extend > 0)
 			{
@@ -211,7 +212,8 @@ public:
 			}
 		}
 
-	void teleopArmControl(){
+	void teleopArmControl() //Secondary controller controls to move grabber
+	{
 		if(js2->GetRawButton(5)){
 			gSol1->Set(DoubleSolenoid::Value::kReverse);
 		}
@@ -225,14 +227,15 @@ public:
 			gSol2->Set(DoubleSolenoid::Value::kForward);
 		}
 	}
-	void pickUpWheels(){
+	void pickUpWheels() //Secondary controller controls to turn on wheels
+	{
 		if(js2->GetRawButton(8)){
 			pWheelL->Set(ControlMode::PercentOutput, .5);
 			pWheelR->Set(ControlMode::PercentOutput, -.5);
 		}
 		else if (js2->GetRawButton(6)){
-			pWheelL->Set(ControlMode::PercentOutput, .5);
-			pWheelR->Set(ControlMode::PercentOutput, -.5);
+			pWheelL->Set(ControlMode::PercentOutput, -.5);
+			pWheelR->Set(ControlMode::PercentOutput, .5);
 
 		}
 		else{
@@ -301,7 +304,7 @@ public:
 		Drop();
 	}
 
-	void Drive(double xAxis, double yAxis, double rot)
+	void Drive(double xAxis, double yAxis, double rot) //home made mecanum drive!
 	{
 		double noMove = 0.2; //Dead area of the axes
 		double maxSpeed = .5;
@@ -358,18 +361,18 @@ public:
 
 		if (autonIsBlueAlliance == true)
 		{
-			if (/*left switch is blue*/)
-			{
-				autonIsLeftSwitch = true;
-			}
+//			if (/*left switch is blue*/)
+//			{
+//				autonIsLeftSwitch = true;
+//			}
 		}
 
 		else if(autonIsBlueAlliance == false)
 		{
-			if(/*left switch is red*/)
-			{
-				autonIsLeftSwitch = true;
-			}
+//			if(/*left switch is red*/)
+//			{
+//				autonIsLeftSwitch = true;
+//			}
 		}
 
 		SmartDashboard::GetBoolean("Auton Is Going to Left Switch?", autonIsLeftSwitch);
@@ -445,7 +448,7 @@ public:
 
 	void TeleopPeriodic()
 	{
-		float angle = gyro->GetAngle();
+		float angle = 0;
 		if (js1->GetRawButton(8)) {
 			m_robotDrive->DriveCartesian(Db(js1->GetY()), Db(-js1->GetX()), Db(-js1->GetZ()), angle);
 		}
