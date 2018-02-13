@@ -19,8 +19,9 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-#include <ctre/Phoenix.h>
 #include <WPILib.h>
+#include <ctre/Phoenix.h>
+
 #include <AHRS.h>
 
 class Robot : public frc::IterativeRobot
@@ -38,9 +39,9 @@ class Robot : public frc::IterativeRobot
 	WPI_TalonSRX *pWheelL = new WPI_TalonSRX(7); //pickup wheels left
 	WPI_TalonSRX *pWheelR = new WPI_TalonSRX(8); //pickup wheels right
 
-	Ultrasonic *Ultra = new Ultrasonic(0, 1); //ultra sonic sensor
+	Ultrasonic *ultra = new Ultrasonic(0, 1); //ultra sonic sensor
 	double distance = 0;
-
+	double driveSpeed = 0;
 	int iJoystickX_ = 0; // Forward motion
 	int iJoystickY_ = 1; // Side motion
 	int iJoystickRotate_ = 2; // Rotating motion
@@ -66,7 +67,7 @@ public:
 		gyro = new AHRS(SPI::Port::kMXP);
 
 		gyro->ZeroYaw();
-		Ultra->SetAutomaticMode(true);
+		ultra->SetAutomaticMode(true);
 
     	js1 = new Joystick(0);
     	js2 = new Joystick(1);
@@ -110,7 +111,7 @@ public:
 		while (wait <= start + t)
 		{
 			wait = clock();
-			distance = Ultra->GetRangeInches();
+			distance = ultra->GetRangeInches();
 			frc::SmartDashboard::PutNumber("distance", distance);
 			timeLeft = (start + t) - wait;
 			frc::SmartDashboard::PutNumber("Time Left", timeLeft);
@@ -192,7 +193,37 @@ public:
 
 
 	}
+	void DriveToBlock(){
+	double distance = ultra->GetRangeInches();
+	SmartDashboard::PutNumber("DriveSpeed", driveSpeed);
+	//if (driveMode != DriveMode::Driving){
+	//return;
+	//	}
+			if (distance >= 44){
+			lf ->Set(ControlMode::PercentOutput, -driveSpeed);
+			lr ->Set(ControlMode::PercentOutput, -driveSpeed);
+			rf ->Set(ControlMode::PercentOutput, driveSpeed);
+			rr ->Set(ControlMode::PercentOutput, driveSpeed);
 
+			distance = ultra->GetRangeInches();
+			SmartDashboard::PutNumber("Distance", distance);
+				}
+		if (distance < 44 && distance >= 8){
+
+		driveSpeed = driveSpeed * 0.9;
+
+		}
+		if (distance < 8) {
+		//driveMode = DriveMode::Pickup;
+		lf ->Set(ControlMode::PercentOutput, 0);
+		lr ->Set(ControlMode::PercentOutput, 0);
+		rf ->Set(ControlMode::PercentOutput, 0);
+	    rr ->Set(ControlMode::PercentOutput, 0);
+		}
+	//here's where we need to grab the block
+	}
+
+	//This extends and retracts the pole. It also sets the motor to 0
 	void ActuateBirdPole(int extend) //this function 1. makes the motor go forward to extend the pole
 									 //2. rewinds the pole by making the motor negative 3. stops the motor
 		{
@@ -212,6 +243,21 @@ public:
 			}
 		}
 
+	void teleopSkyLift()
+	{
+		bool goingUp = js1->GetRawButton(7);
+		bool goingDown = js1->GetRawButton(5);
+
+		if(!goingUp && !goingDown){
+			sLift ->Set(ControlMode::PercentOutput, 0.75);
+		}
+		else if(goingUp){
+		 sLift ->Set(ControlMode::PercentOutput, 1);
+		}
+		else if(goingDown){
+			sLift ->Set(ControlMode::PercentOutput, 0);
+		}
+	}
 	void teleopArmControl() //Secondary controller controls to move grabber
 	{
 		if(js2->GetRawButton(5)){
@@ -365,6 +411,42 @@ public:
 //			{
 //				autonIsLeftSwitch = true;
 //			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
+//			if ()/*left switch is blue*/
+//			{
+//				autonIsLeftSwitch = true;
+//			}
 		}
 
 		else if(autonIsBlueAlliance == false)
@@ -393,7 +475,7 @@ public:
 		SmartDashboard::PutNumber("Center Y ", centerY);
 		SmartDashboard::PutNumber("Area ", area);
 
-		distance = Ultra->GetRangeInches();
+		distance = ultra->GetRangeInches();
 		frc::SmartDashboard::PutNumber("distance", distance);
 
 		currentAngle = gyro->GetYaw();
@@ -460,6 +542,17 @@ public:
 
 		teleopArmControl();
 		pickUpWheels();
+
+		int PoleExtend=0;
+		if (js1->GetRawButton(3)){ //Button B extends the pole
+			PoleExtend=1;
+		}
+		if (js1->GetRawButton(2)){ //Button A retracts the pole
+			PoleExtend=-1;
+		}
+
+		ActuateBirdPole(PoleExtend);
+
 	}
 
 	void TestPeriodic()
